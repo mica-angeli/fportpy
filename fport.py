@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-import serial
-
 FPORT_FRAME_MARKER = 0x7e
 FPORT_ESCAPE_CHAR = 0x7d
 FPORT_ESCAPE_MASK = 0x20
@@ -19,12 +17,12 @@ def channels_to_str(channels) -> str:
     return ' '.join(f'{x:04d}' for x in channels)
 
 
-def get_fport_data(ser: serial.Serial) -> list:
+def get_fport_data(read_byte_serial_func) -> list:
     data = []
     frame_position = 0
     escaped_character = False
     while True:
-        val = ser.read()[0]
+        val = read_byte_serial_func()
         if val == FPORT_FRAME_MARKER:
             frame_position = 1
             escaped_character = False
@@ -42,9 +40,9 @@ def get_fport_data(ser: serial.Serial) -> list:
     return data
 
 
-def get_channels(ser: serial.Serial, adjust_values: bool = True):
+def get_channels(read_byte_serial_func, adjust_values: bool = True):
     while True:
-        data = get_fport_data(ser)
+        data = get_fport_data(read_byte_serial_func)
         if data[1] == 0x00:
             break
 
@@ -73,11 +71,22 @@ def get_channels(ser: serial.Serial, adjust_values: bool = True):
 
 
 if __name__ == '__main__':
-    ser = serial.Serial('/dev/ttyS0', baudrate=115200)
+    from argparse import ArgumentParser
+    from serial import Serial
+
+    parser = ArgumentParser(description='Monitor FrSky F.Port receiverchannels')
+    parser.add_argument('serial_port', type=str,
+                        help='Serial port of the F.Port receiver')
+    args = parser.parse_args()
+
+    ser = Serial(args.serial_port, baudrate=115200)
+
+    def read_byte():
+        return ser.read()[0]
 
     try:
         while True:
-            data = get_channels(ser)
+            data = get_channels(read_byte)
             print('\r', channels_to_str(data), end='')
     except KeyboardInterrupt:
         pass
