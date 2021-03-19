@@ -14,7 +14,7 @@ def to_binary_str(data) -> str:
 
 
 def channels_to_str(channels) -> str:
-    return ' '.join(f'{x:04d}' for x in channels)
+    return ' '.join(f'{i + 1:d}:{x:04d}' for i, x in enumerate(channels))
 
 
 def get_fport_data(read_byte_serial_func) -> list:
@@ -87,7 +87,7 @@ if __name__ == '__main__':
     try:
         while True:
             data = get_channels(read_byte)
-            print('\r', channels_to_str(data), end='')
+            print('\r', channels_to_str(data), end='', flush=True)
     except KeyboardInterrupt:
         pass
     finally:
