@@ -1,18 +1,23 @@
-import time
+#!/usr/bin/env python3
+
 import serial
 
 FPORT_FRAME_MARKER = 0x7e
 FPORT_ESCAPE_CHAR = 0x7d
 FPORT_ESCAPE_MASK = 0x20
 
+
 def to_hex_str(data) -> str:
     return ' '.join(f'{x:02x}' for x in data)
+
 
 def to_binary_str(data) -> str:
     return ' '.join(f'{x:02b}' for x in data)
 
+
 def channels_to_str(channels) -> str:
     return ' '.join(f'{x:04d}' for x in channels)
+
 
 def get_fport_data(ser: serial.Serial) -> list:
     data = []
@@ -35,6 +40,7 @@ def get_fport_data(ser: serial.Serial) -> list:
             data.append(val)
             frame_position += 1
     return data
+
 
 def get_channels(ser: serial.Serial, adjust_values: bool = True):
     while True:
@@ -65,28 +71,15 @@ def get_channels(ser: serial.Serial, adjust_values: bool = True):
         channels = [(5 * ch // 8) + 880 for ch in channels]
     return channels
 
-def get_channel_1(data):
-    # return data[2]
-    # val = data[2] + ((data[3] & 0b11100000) << 3)
-    # val = (data[2] << 3) + ((data[3] & 0b11100000) >> 5)
-    val = data[2] | data[3] << 8 & 0x07ff
-    return f'{val}'
 
-ser = serial.Serial('/dev/ttyS0', baudrate=115200)
+if __name__ == '__main__':
+    ser = serial.Serial('/dev/ttyS0', baudrate=115200)
 
-# start_time = time.time()
-try:
-    while True:
-        data = get_channels(ser)
-        # hex_str = to_hex_str(data)
-        # print('Length:', len(data), 'Sum:', sum(data))
-        # print('\r', hex_str, end='')
-        # print(get_channel_1(data))
-        # print('\r', data[2], end='')
-        print('\r', channels_to_str(data), end='')
-except KeyboardInterrupt:
-    pass
-finally:
-# end_time = time.time()
-    ser.close()
-# print('Avg Rate:', 10 / (end_time - start_time))
+    try:
+        while True:
+            data = get_channels(ser)
+            print('\r', channels_to_str(data), end='')
+    except KeyboardInterrupt:
+        pass
+    finally:
+        ser.close()
